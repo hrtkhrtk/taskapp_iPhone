@@ -11,6 +11,7 @@ import RealmSwift   // ←追加
 import UserNotifications    // 追加
 
 class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+    @IBOutlet weak var searchTextField: UITextField!
     @IBOutlet weak var tableView: UITableView!
     
     // Realmインスタンスを取得する
@@ -19,7 +20,10 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     // DB内のタスクが格納されるリスト。
     // 日付近い順\順でソート：降順
     // 以降内容をアップデートするとリスト内は自動的に更新される。
-    var taskArray = try! Realm().objects(Task.self).sorted(byKeyPath: "date", ascending: false)  // ←追加
+    //var taskArray = try! Realm().objects(Task.self).sorted(byKeyPath: "date", ascending: false)  // ←追加
+    //var taskArray:[Task] = []
+    var taskArray:Results<Task>!
+    //var taskArray:Results<Task> = Results<Task>()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -54,10 +58,48 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         }
     }
     
+    
+    
+    @IBAction func searchButton(_ sender: Any) {
+        //print("test0102n01")
+        //print(searchTextField.text!)
+        //print(searchTextField.text! ?? "")
+        //self.taskArray = try! Realm().objects(Task.self).filter("category = \(searchTextField.text!)").sorted(byKeyPath: "date", ascending: false) // ダメ
+        //self.taskArray = try! Realm().objects(Task.self).filter("category = 'C01'").sorted(byKeyPath: "date", ascending: false) // 動作はOK
+        //self.taskArray = try! Realm().objects(Task.self).filter("category == 'C01'").sorted(byKeyPath: "date", ascending: false) // ダメ？ // これでもOKっぽい
+        //self.taskArray = try! Realm().objects(Task.self) // 動作はOK
+        
+//        // Query using an NSPredicate // OK
+//        let predicate = NSPredicate(format: "category = %@", searchTextField.text!)
+//        self.taskArray = try! Realm().objects(Task.self).filter(predicate).sorted(byKeyPath: "date", ascending: false)
+        
+        // Query using an NSPredicate // OK
+        if searchTextField.text! != "" {
+            //print("test0102n11")
+            let predicate = NSPredicate(format: "category = %@", searchTextField.text!)
+            self.taskArray = try! Realm().objects(Task.self).filter(predicate).sorted(byKeyPath: "date", ascending: false)
+        }
+        else if searchTextField.text! == "" {
+            //print("test0102n12")
+            //self.taskArray = try! Realm().objects(Task.self).filter("category = ''").sorted(byKeyPath: "date", ascending: false) // ダメ
+            self.taskArray = try! Realm().objects(Task.self).filter("FALSEPREDICATE") // 参考：https://yoneapp.hatenablog.com/entry/2015/08/09/104111
+        }
+
+        
+        tableView.reloadData()
+    }
+    
+    
+    
     // MARK: UITableViewDataSourceプロトコルのメソッド
     // データの数（＝セルの数）を返すメソッド
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return taskArray.count  // ←修正する
+        if taskArray != nil {
+            return taskArray.count  // ←修正する
+        }
+        else {
+            return 0
+        }
     }
     
     // 各セルの内容を返すメソッド
